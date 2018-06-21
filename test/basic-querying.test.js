@@ -1026,6 +1026,36 @@ describe('basic-querying', function() {
     });
   });
 
+  describe('destroyAll', function() {
+    beforeEach(function resetFixtures(done) {
+      User.destroyAll(function() {
+        User.create([
+          {name: 'John'},
+          {name: 'Jane'},
+          {name: 'Mary'},
+        ], done);
+      });
+    });
+
+    after(function deleteFixtures(done) {
+      User.destroyAll(done);
+    });
+
+    it('should not delete all for bad where object', function(done) {
+      User.destroyAll({where: {name: 'Test'}}, function(err, info) {
+        should.not.exist(err);
+        User.find({fields: 'name'}, function(err, users) {
+          users.should.containDeep([
+            {name: 'John'},
+            {name: 'Jane'},
+            {name: 'Mary'},
+          ]);
+          done();
+        });
+      });
+    });
+  });
+
   context('regexp operator', function() {
     var invalidDataTypes = [0, true, {}, [], Function, null];
 
