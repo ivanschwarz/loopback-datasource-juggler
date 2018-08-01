@@ -1041,10 +1041,64 @@ describe('basic-querying', function() {
       User.destroyAll(done);
     });
 
-    it('should not delete all for bad where object', function(done) {
-      User.destroyAll({where: {name: 'Test'}}, function(err, info) {
+    it('should delete using condition from filter', function(done) {
+      User.destroyAll({where: {name: 'John'}}, function(err, info) {
         should.not.exist(err);
         User.find({fields: 'name'}, function(err, users) {
+          should.not.exist(err);
+          users.should.containDeep([
+            {name: 'Jane'},
+            {name: 'Mary'},
+          ]);
+          done();
+        });
+      });
+    });
+
+    it('should not delete all for bad and condition', function(done) {
+      User.destroyAll({and: [{name: 'Jane'}, {where: {name: 'John'}}]}, function(err, info) {
+        should.not.exist(err);
+        User.find({fields: 'name'}, function(err, users) {
+          should.not.exist(err);
+          let userObjects = [];
+          users.forEach(user => userObjects.push(user.toObject()));
+          userObjects.should.containDeep([
+            {name: 'John'},
+            {name: 'Jane'},
+            {name: 'Mary'},
+          ]);
+          done();
+        });
+      });
+    });
+
+    it('should delete all for undefined object', function(done) {
+      User.destroyAll(undefined, function(err, info) {
+        should.not.exist(err);
+        User.find({fields: 'name'}, function(err, users) {
+          should.not.exist(err);
+          users.should.containDeep([]);
+          done();
+        });
+      });
+    });
+
+    it('should not delete all for empty object', function(done) {
+      User.destroyAll({}, function(err, info) {
+        should.not.exist(err);
+        User.find({fields: 'name'}, function(err, users) {
+          should.exist(err);
+          err.message.should.contain(/Cannot pass in an empty where/);
+          done();
+        });
+      });
+    });
+
+    it('should not delete all for filter with undefined property', function(done) {
+      User.destroyAll({name: undefined}, function(err, info) {
+        should.not.exist(err);
+        User.find({fields: 'name'}, function(err, users) {
+          should.not.exist(err);
           users.should.containDeep([
             {name: 'John'},
             {name: 'Jane'},
